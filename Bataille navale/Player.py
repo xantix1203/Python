@@ -1,7 +1,8 @@
-from Grille import Grille
+from Grille import *
+
 
 class Player:
-    def __init__(self, name, score=0):
+    def __init__(self, name, grille, score=0):
         self.name = name
         self.score = score
-        self.grille = Grille()
+        self.grille = Grille(species="human")
