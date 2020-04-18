@@ -11,5 +11,5 @@ class Boat:
             if self.list[i] == shot:
                 self.state -= 1
                 self.list[i][1] = -1
-                return True, self.state == 0 # Wounded, self.state == 0
+                return True, self.state == 0  # Wounded, sunk
         return False, False
