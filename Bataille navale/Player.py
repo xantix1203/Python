@@ -18,7 +18,6 @@ class Player:
             if hit:
                 self.score += 1
 
+    @staticmethod
     def get_shot():
         return int(input("ordonnee tir: ")), int(input("abscisse tir"))
-
-    get_shot = staticmethod(get_shot)
