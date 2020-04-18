@@ -20,5 +20,4 @@ class Player:
 
     @staticmethod
     def get_shot():
-
         return int(input("ordonnee tir: ")), int(input("abscisse tir"))
