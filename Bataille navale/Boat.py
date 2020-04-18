@@ -1,7 +1,5 @@
 import pygame as pg
 
-black_color = (0, 0, 0)
-
 
 class Boat:
     def __init__(self, size, points):
@@ -20,11 +18,12 @@ class Boat:
         return False, False
 
     def full_display(self, window):
-        for coordinates in self.list:
-            x, y = coordinates[0]
+        black_color = (0, 0, 0)
+        for coordinates_grid in self.list:
+            x_grid, y_grid = coordinates_grid[0]
             pg.draw.line(window, black_color, (
-                x * 100 + 10, y * 100 + 10), (
-                             (x + 1) * 100 - 10, (y + 1) * 100 - 10), 5)
+                x_grid * 100 + 10, y_grid * 100 + 10), (
+                             (x_grid + 1) * 100 - 10, (y_grid + 1) * 100 - 10), 5)
             pg.draw.line(window, black_color, (
-                (x + 1) * 100 - 10, y * 100 + 10), (
-                             x * 100 + 10, (y + 1) * 100 - 10), 5)
+                (x_grid + 1) * 100 - 10, y_grid * 100 + 10), (
+                             x_grid * 100 + 10, (y_grid + 1) * 100 - 10), 5)
