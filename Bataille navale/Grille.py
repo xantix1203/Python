@@ -1,3 +1,4 @@
+from Boat import Boat
 from random import *
 import numpy as np
 
