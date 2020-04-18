@@ -13,7 +13,7 @@ class Game:
             for i in range(numbers_of_players):
                 self.remaining_players.append(Player(str(input("Nom du joueur {}: ".format(i)))))
 
-    def tour(self):
+    def round(self):
         for player in self.remaining_players:
             opponents_list = list(self.remaining_players)
             opponents_list.remove(player)
