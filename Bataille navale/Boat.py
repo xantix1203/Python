@@ -1,6 +1,6 @@
 class Boat:
     def __init__(self, size, points):
-        self.sunk = False
+        # self.sunk = False
         self.type = ["torpilleur", "sous-marin", "croiseur", "porte-avion"][size - 2]
         self.state = size
         self.size = size
@@ -11,5 +11,5 @@ class Boat:
             if self.list[i] == shot:
                 self.state -= 1
                 self.list[i][1] = -1
-                return True, self.state == 0  # Wounded, sunk
+                return True, self.state == 0  # hit, sunk
         return False, False
