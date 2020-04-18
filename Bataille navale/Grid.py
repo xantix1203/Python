@@ -64,7 +64,7 @@ class Grid:
         window = pg.display.set_mode((1000, 1000), pg.RESIZABLE)  # initialisation de l'affichage
         window.fill(blue_color)
         for i in range(1, 10):
-            pg.draw.line(window, black_color, (100 * i, 0), (100 * i, 1000), 1)
+            pg.draw.line(window, black_color, (100 * i, 0), (100 * i, 1000), 1)  # tracé de la grille
             pg.draw.line(window, black_color, (0, 100 * i), (1000, 100 * i), 1)
         pg.display.flip()
 
