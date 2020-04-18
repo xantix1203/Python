@@ -1,4 +1,5 @@
 from Player import *
+from random import choice
 
 
 class Bot(Player):
