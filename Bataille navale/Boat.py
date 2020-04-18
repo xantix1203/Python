@@ -1,5 +1,13 @@
 import pygame as pg
 
+global blue_color
+global black_color
+global grey_color
+
+blue_color = (90, 150, 255)
+black_color = (0, 0, 0)
+grey_color = (100, 100, 100)
+
 
 class Boat:
     def __init__(self, size, points):

@@ -61,46 +61,84 @@ class Grid:
     def init_player(self):
         pg.init()
 
-        blue_color = (90, 150, 255)
-        black_color = (0, 0, 0)
-        grey_color = (100, 100, 100)
-
         window = pg.display.set_mode((1000, 1000), pg.RESIZABLE)  # initialisation de l'affichage
         window.fill(blue_color)
         for i in range(1, 10):
             pg.draw.line(window, black_color, (100 * i, 0), (100 * i, 1000), 1)
             pg.draw.line(window, black_color, (0, 100 * i), (1000, 100 * i), 1)
         pg.display.flip()
-        for i in range(5, 1, -1):  # positionnement des bateaux (taille)
-            for j in range(6 - i):  # (nombre)
+
+        occupied_spaces = []  # positionnement des bateaux
+        for i in range(5, 1, -1):  # taille
+            for j in range(6 - i):  # nombre
                 launched = True
-                vertical = False
+                vertical = True
                 x_grid0, y_grid0 = (0, 0)
                 while launched:
                     for event in pg.event.get():
                         if event.type == pg.MOUSEMOTION:  # affichage bateau temporaire
-                            x_disp, y_disp = event.pos
-                            x_grid, y_grid = (x_disp // 100), (y_disp // 100)
-                            if vertical and y_grid <= 9 - i:  # bateau vertical
-                                for k in range(i):
-                                    self.draw_cross(window, blue_color, (x_grid0, y_grid0 + k))
-                                    self.draw_cross(window, grey_color, (x_grid, y_grid + k))
-                                x_grid0, y_grid0 = x_grid, y_grid
-                            if not vertical and x_grid <= 9 - i:  # horizontal
-                                for k in range(i):
-                                    self.draw_cross(window, blue_color, (x_grid0 + k, y_grid0))
-                                    self.draw_cross(window, grey_color, (x_grid + k, y_grid))
-                                x_grid0, y_grid0 = x_grid, y_grid
+                            x_grid0, y_grid0 = self.event_mousemotion(event, window, vertical, i, x_grid0, y_grid0)
                         if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:  # affichage bateau définitif
-                            x_disp, y_disp = event.pos
-                            x_grid, y_grid = (x_disp // 100), (y_disp // 100)
-                            if vertical and y_grid <= 9 - i:  # bateau vertical
-                                points_list = []
-                                for k in range(i):
-                                    points_list.append((x_grid, y_grid + k))
-                                self.floating_boat.append(Boat(i, points_list))
-                            launched = False
+                            launched = self.event_mousebuttondown(event, occupied_spaces, vertical, i)
+                        if event.type == pg.KEYDOWN and event.key == pg.K_r:
+                            vertical = self.event_keyboard(window, vertical)
                     pg.display.flip()
+
+    def event_mousemotion(self, event, window, vertical, i, x_grid0, y_grid0):
+        x_disp, y_disp = event.pos
+        x_grid, y_grid = (x_disp // 100), (y_disp // 100)
+        if vertical and y_grid < 9 - i:  # bateau vertical
+            for boat in self.floating_boat:
+                boat.full_display(window)
+            for k in range(i):
+                self.draw_cross(window, blue_color, (x_grid0, y_grid0 + k))
+                self.draw_cross(window, grey_color, (x_grid, y_grid + k))
+            return x_grid, y_grid
+        if not vertical and x_grid <= 9 - i + 1:  # horizontal
+            for boat in self.floating_boat:
+                boat.full_display(window)
+            for k in range(i):
+                self.draw_cross(window, blue_color, (x_grid0 + k, y_grid0))
+                self.draw_cross(window, grey_color, (x_grid + k, y_grid))
+            return x_grid, y_grid
+        return x_grid0, y_grid0
+
+    def event_mousebuttondown(self, event, occupied_spaces, vertical, i):
+        x_disp, y_disp = event.pos
+        x_grid, y_grid = (x_disp // 100), (y_disp // 100)
+        if vertical and y_grid < 9 - i:  # bateau vertical
+            points_list = []
+            flag = True
+            for k in range(i):  # test de validité de l'emplacement
+                if (x_grid, y_grid + k) in occupied_spaces:
+                    flag = False
+                    break
+                points_list.append((x_grid, y_grid + k))
+            if flag:
+                self.floating_boat.append(Boat(i, points_list))  # creation du bateau
+                for k in range(i):  # actualisation des emplacements occupés
+                    occupied_spaces.append((x_grid, y_grid + k))
+                return False
+        if not vertical and x_grid <= 9 - i + 1:  # bateau horizontal
+            points_list = []
+            flag = True
+            for k in range(i):  # test de validité de l'emplacement
+                if (x_grid + k, y_grid) in occupied_spaces:
+                    flag = False
+                    break
+                points_list.append((x_grid + k, y_grid))
+            if flag:
+                self.floating_boat.append(Boat(i, points_list))  # creation du bateau
+                for k in range(i):  # actualisation des emplacements occupés
+                    occupied_spaces.append((x_grid + k, y_grid))
+                return False
+        return True
+
+    def event_keyboard(self, window, vertical):
+        for x_grid in range(10):
+            for y_grid in range(10):
+                self.draw_cross(window, blue_color, (x_grid, y_grid))
+        return not vertical
 
     def __str__(self):
         return str(self.grid)
