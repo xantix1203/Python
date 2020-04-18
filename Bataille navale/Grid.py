@@ -4,8 +4,9 @@ import numpy as np
 
 
 class Grid:
-    def __init__(self, species):
+    def __init__(self, species, name="bot"):
         self.grid = np.zeros((10, 10))
+        self.name = name
         self.floating_boat = []
         self.sunk_boat = []
         if species == "bot":  # initialisation grille du bot
@@ -15,7 +16,7 @@ class Grid:
 
     def init_bot(self):
         for i in range(5, 1, -1):
-            for j in range(6 - i):
+            for j in range(list_boats[i - 2]):
                 flag = True
                 m = 0
                 while flag and m < 1000:
@@ -62,6 +63,7 @@ class Grid:
         pg.init()
 
         window = pg.display.set_mode((1000, 1000), pg.RESIZABLE)  # initialisation de l'affichage
+        pg.display.set_caption("Initialisation de la grille de " + self.name)
         window.fill(blue_color)
         for i in range(1, 10):
             pg.draw.line(window, black_color, (100 * i, 0), (100 * i, 1000), 1)  # tracé de la grille
@@ -70,7 +72,7 @@ class Grid:
 
         occupied_spaces = []  # positionnement des bateaux
         for i in range(5, 1, -1):  # taille
-            for j in range(6 - i):  # nombre
+            for j in range(list_boats[i - 2]):  # nombre
                 launched = True
                 vertical = True
                 x_grid0, y_grid0 = (0, 0)

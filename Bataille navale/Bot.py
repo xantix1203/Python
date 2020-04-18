@@ -7,5 +7,5 @@ class Bot(Player):
         Player.__init__(self, choice(["Ken", "Barbie", "Mickael", "Joe la classe", "Samsoum"]), "bot", score)
 
     @staticmethod
-    def get_shot():
+    def get_shot(opponent):
         return randint(0, 9), randint(0, 9)
