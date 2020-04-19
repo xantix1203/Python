@@ -63,12 +63,12 @@ class Grid:
     def init_player(self):
         pg.init()
 
-        window = pg.display.set_mode((1000, 1000), pg.RESIZABLE)  # initialisation de l'affichage
+        window = pg.display.set_mode((800, 800))  # initialisation de l'affichage
         pg.display.set_caption("Initialisation de la grille de " + self.name)
         window.fill(blue_color)
         for i in range(1, 10):
-            pg.draw.line(window, black_color, (100 * i, 0), (100 * i, 1000), 1)  # tracé de la grille
-            pg.draw.line(window, black_color, (0, 100 * i), (1000, 100 * i), 1)
+            pg.draw.line(window, black_color, (80 * i, 0), (80 * i, 800), 1)  # tracé de la grille
+            pg.draw.line(window, black_color, (0, 80 * i), (800, 80 * i), 1)
         pg.display.flip()
 
         occupied_spaces = []  # positionnement des bateaux
@@ -92,14 +92,14 @@ class Grid:
         x_grid, y_grid = (x_disp // 100), (y_disp // 100)
         if vertical and y_grid < 9 - i:  # bateau vertical
             for boat in self.floating_boat:
-                boat.full_display(window)
+                boat.full_display(window, black_color)
             for k in range(i):
                 self.draw_cross(window, blue_color, (x_grid0, y_grid0 + k))
                 self.draw_cross(window, grey_color, (x_grid, y_grid + k))
             return x_grid, y_grid
         if not vertical and x_grid <= 9 - i + 1:  # horizontal
             for boat in self.floating_boat:
-                boat.full_display(window)
+                boat.full_display(window, black_color)
             for k in range(i):
                 self.draw_cross(window, blue_color, (x_grid0 + k, y_grid0))
                 self.draw_cross(window, grey_color, (x_grid + k, y_grid))

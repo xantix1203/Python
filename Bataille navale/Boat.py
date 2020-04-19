@@ -31,9 +31,10 @@ class Boat:
             print("1 coup dans l'eau")
         return False, False
 
-    def full_display(self, window):
+    def full_display(self, window, color):
         for coordinates_grid in self.list:
-            self.draw_cross(window, black_color, coordinates_grid[0])
+            self.draw_square(window, color, coordinates_grid[0])
+            self.draw_cross(window, color, coordinates_grid[0])
 
     def partial_display(self, window):
         for coordinates_grid in self.list:
@@ -49,3 +50,19 @@ class Boat:
         pg.draw.line(window, color, (
             (x_grid + 1) * 100 - 10, y_grid * 100 + 10), (
                          x_grid * 100 + 10, (y_grid + 1) * 100 - 10), 5)
+
+    @staticmethod
+    def draw_square(window, color, coordinates_grid):
+        x_grid, y_grid = coordinates_grid
+        pg.draw.line(window, color, (
+            x_grid * 100, y_grid * 100), (
+                         (x_grid + 1) * 100, y_grid * 100), 5)
+        pg.draw.line(window, color, (
+            (x_grid + 1) * 100, y_grid * 100), (
+                         (x_grid + 1) * 100, (y_grid + 1) * 100), 5)
+        pg.draw.line(window, color, (
+            (x_grid + 1) * 100, (y_grid + 1) * 100), (
+                         x_grid * 100, (y_grid + 1) * 100), 5)
+        pg.draw.line(window, color, (
+            x_grid * 100, (y_grid + 1) * 100), (
+                         x_grid * 100, y_grid * 100), 5)
