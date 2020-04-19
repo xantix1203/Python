@@ -19,7 +19,7 @@ class Grid:
             for j in range(list_boats[i - 2]):
                 flag = True
                 m = 0
-                while flag and m < 1000:
+                while flag and m < 800:
                     x, y, alpha = randint(0, 9), randint(0, 9), randint(0, 1)
                     for k in range(4):
                         if (k + alpha) % 4 == 0:
@@ -89,7 +89,7 @@ class Grid:
 
     def event_mousemotion(self, event, window, vertical, i, x_grid0, y_grid0):
         x_disp, y_disp = event.pos
-        x_grid, y_grid = (x_disp // 100), (y_disp // 100)
+        x_grid, y_grid = (x_disp // 80), (y_disp // 80)
         if vertical and y_grid < 9 - i:  # bateau vertical
             for boat in self.floating_boat:
                 boat.full_display(window, black_color)
@@ -108,7 +108,7 @@ class Grid:
 
     def event_mousebuttondown(self, event, occupied_spaces, vertical, i):
         x_disp, y_disp = event.pos
-        x_grid, y_grid = (x_disp // 100), (y_disp // 100)
+        x_grid, y_grid = (x_disp // 80), (y_disp // 80)
         if vertical and y_grid < 9 - i:  # bateau vertical
             points_list = []
             flag = True
@@ -152,8 +152,8 @@ class Grid:
     def draw_cross(window, color, coordinates_grid):
         x_grid, y_grid = coordinates_grid
         pg.draw.line(window, color, (
-            x_grid * 100 + 10, y_grid * 100 + 10), (
-                         (x_grid + 1) * 100 - 10, (y_grid + 1) * 100 - 10), 5)
+            x_grid * 80 + 10, y_grid * 80 + 10), (
+                         (x_grid + 1) * 80 - 10, (y_grid + 1) * 80 - 10), 5)
         pg.draw.line(window, color, (
-            (x_grid + 1) * 100 - 10, y_grid * 100 + 10), (
-                         x_grid * 100 + 10, (y_grid + 1) * 100 - 10), 5)
+            (x_grid + 1) * 80 - 10, y_grid * 80 + 10), (
+                         x_grid * 80 + 10, (y_grid + 1) * 80 - 10), 5)

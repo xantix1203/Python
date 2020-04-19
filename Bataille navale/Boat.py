@@ -8,7 +8,7 @@ global list_boats
 
 blue_color = (90, 150, 255)
 black_color = (0, 0, 0)
-grey_color = (100, 100, 100)
+grey_color = (80, 80, 80)
 red_color = (178, 34, 34)
 list_boats = [1, 2, 1, 1]
 
@@ -45,24 +45,24 @@ class Boat:
     def draw_cross(window, color, coordinates_grid):
         x_grid, y_grid = coordinates_grid
         pg.draw.line(window, color, (
-            x_grid * 100 + 10, y_grid * 100 + 10), (
-                         (x_grid + 1) * 100 - 10, (y_grid + 1) * 100 - 10), 5)
+            x_grid * 80 + 10, y_grid * 80 + 10), (
+                         (x_grid + 1) * 80 - 10, (y_grid + 1) * 80 - 10), 5)
         pg.draw.line(window, color, (
-            (x_grid + 1) * 100 - 10, y_grid * 100 + 10), (
-                         x_grid * 100 + 10, (y_grid + 1) * 100 - 10), 5)
+            (x_grid + 1) * 80 - 10, y_grid * 80 + 10), (
+                         x_grid * 80 + 10, (y_grid + 1) * 80 - 10), 5)
 
     @staticmethod
     def draw_square(window, color, coordinates_grid):
         x_grid, y_grid = coordinates_grid
         pg.draw.line(window, color, (
-            x_grid * 100, y_grid * 100), (
-                         (x_grid + 1) * 100, y_grid * 100), 5)
+            x_grid * 80, y_grid * 80), (
+                         (x_grid + 1) * 80, y_grid * 80), 5)
         pg.draw.line(window, color, (
-            (x_grid + 1) * 100, y_grid * 100), (
-                         (x_grid + 1) * 100, (y_grid + 1) * 100), 5)
+            (x_grid + 1) * 80, y_grid * 80), (
+                         (x_grid + 1) * 80, (y_grid + 1) * 80), 5)
         pg.draw.line(window, color, (
-            (x_grid + 1) * 100, (y_grid + 1) * 100), (
-                         x_grid * 100, (y_grid + 1) * 100), 5)
+            (x_grid + 1) * 80, (y_grid + 1) * 80), (
+                         x_grid * 80, (y_grid + 1) * 80), 5)
         pg.draw.line(window, color, (
-            x_grid * 100, (y_grid + 1) * 100), (
-                         x_grid * 100, y_grid * 100), 5)
+            x_grid * 80, (y_grid + 1) * 80), (
+                         x_grid * 80, y_grid * 80), 5)

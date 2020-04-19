@@ -3,9 +3,10 @@ from Grid import *
 
 class Player:
     def __init__(self, name, species="human", score=0):
+        self.species = species
         self.name = name
         self.score = score
-        self.grid = Grid(species, self.name)
+        self.grid = Grid(self.species, self.name)
         self.eliminated = False
         self.occupied_spaces = {}
 
@@ -27,12 +28,12 @@ class Player:
     def get_shot(self, opponent):
         pg.init()
 
-        window = pg.display.set_mode((1000, 1000), pg.RESIZABLE)  # initialisation de l'affichage
+        window = pg.display.set_mode((800, 800))  # initialisation de l'affichage
         pg.display.set_caption("Aller " + self.name + " c'est le moment de demonter " + opponent.name + "!")
         window.fill(blue_color)
         for i in range(1, 10):
-            pg.draw.line(window, black_color, (100 * i, 0), (100 * i, 1000), 1)  # tracé de la grille
-            pg.draw.line(window, black_color, (0, 100 * i), (1000, 100 * i), 1)
+            pg.draw.line(window, black_color, (80 * i, 0), (80 * i, 800), 1)  # tracé de la grille
+            pg.draw.line(window, black_color, (0, 80 * i), (800, 80 * i), 1)
         pg.display.flip()
         launched = True
         print(self.occupied_spaces)
@@ -50,7 +51,7 @@ class Player:
 
     def event_mousemotion(self, event, window, opponent, x_grid0, y_grid0):
         x_disp, y_disp = event.pos
-        x_grid, y_grid = (x_disp // 100), (y_disp // 100)
+        x_grid, y_grid = (x_disp // 80), (y_disp // 80)
         self.grid.draw_cross(window, blue_color, (x_grid0, y_grid0))
         for (x_grid1, y_grid1) in self.occupied_spaces[opponent]:
             self.grid.draw_cross(window, black_color, (x_grid1, y_grid1))
@@ -63,7 +64,7 @@ class Player:
 
     def event_mousebuttondown(self, event, opponent):
         x_disp, y_disp = event.pos
-        x_grid, y_grid = (x_disp // 100), (y_disp // 100)
+        x_grid, y_grid = (x_disp // 80), (y_disp // 80)
         if not ((x_grid, y_grid) in self.occupied_spaces[opponent]):
             self.occupied_spaces[opponent].append((x_grid, y_grid))
             return False, (x_grid, y_grid)

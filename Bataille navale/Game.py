@@ -17,7 +17,8 @@ class Game:
             opponents_list.remove(player)
             for opponent in opponents_list:
                 player.occupied_spaces[opponent] = []
-
+                if player.species == "bot":
+                    player.remaining_shots[opponent] = [(i, j) for i in range(10) for j in range(10)]
         for player in self.remaining_players:
             print(player)
             print(player.grid)
