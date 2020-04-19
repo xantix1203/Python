@@ -96,11 +96,11 @@ class Grid:
             pg.draw.line(window, black_color, (0, 80 * i), (800, 80 * i), 1)
         pg.display.flip()
 
+        vertical = True
         occupied_spaces = []  # positionnement des bateaux
         for i in range(5, 1, -1):  # taille
             for j in range(list_boats[i - 2]):  # nombre
                 launched = True
-                vertical = True
                 x_grid0, y_grid0 = (0, 0)
                 while launched:
                     for event in pg.event.get():
