@@ -3,6 +3,7 @@ from Bot import *
 
 class Game:
     def __init__(self):
+        self.multiplayer = self.init_get_multiplayer()
         self.remaining_players = []
         self.eliminated_players = []
         number_of_players = self.init_get_number_of_players()
@@ -32,6 +33,10 @@ class Game:
             print("liste bateaux {}".format(player))
             for boat in player.grid.floating_boat:
                 print(boat.list, boat.state)
+
+    @staticmethod
+    def init_get_multiplayer():
+        return True
 
     @staticmethod
     def init_get_number_of_players():

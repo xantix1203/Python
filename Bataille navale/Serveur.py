@@ -14,9 +14,10 @@ class Serveur:
         self.main_connexion.listen(5)
         for i in range(number_of_players - 1):
             self.connexion_list.append(self.main_connexion.accept()[0])
-            print("connexion client {} ok".format(i))
+            print("connexion client {}".format(i + 1))
 
 
 serveur = Serveur("25.138.5.142", 12800, 3)
 for connexion in serveur.connexion_list:
     connexion.close()
+    print("deconnexion client")
