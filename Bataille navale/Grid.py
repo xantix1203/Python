@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Grid:
-    def __init__(self, species, name="bot"):
+    def __init__(self, species, name):
         self.grid = np.zeros((10, 10))
         self.name = name
         self.floating_boat = []
@@ -15,49 +15,74 @@ class Grid:
             self.init_player()
 
     def init_bot(self):
+        occupied_places = []
         for i in range(5, 1, -1):
             for j in range(list_boats[i - 2]):
                 flag = True
                 m = 0
-                while flag and m < 800:
+                while flag and m < 10000:
                     x, y, alpha = randint(0, 9), randint(0, 9), randint(0, 1)
                     for k in range(4):
                         if (k + alpha) % 4 == 0:
                             if y + i < 10 and (self.grid[x, y:y + i] == np.zeros(i)).all():
-                                flag = False
-                                points_list = []
+                                flag2 = True
                                 for n in range(i):
-                                    points_list.append((x, y + n))
-                                self.floating_boat.append(Boat(i, points_list))
-                                self.grid[x, y:y + i] = [i] * i
-                                break
+                                    if (x, y + n) in occupied_places:
+                                        flag2 = False
+                                if flag2:
+                                    flag = False
+                                    points_list = []
+                                    for n in range(i):
+                                        points_list.append((x, y + n))
+                                        occupied_places.append((x, y + n))
+                                    self.floating_boat.append(Boat(i, points_list))
+                                    self.grid[x, y:y + i] = [i] * i
+                                    break
                         if k + alpha == 1:
                             if x + i < 10 and (self.grid[x: x + i, y] == np.zeros(i)).all():
-                                flag = False
-                                points_list = []
+                                flag2 = True
                                 for n in range(i):
-                                    points_list.append((x + n, y))
-                                self.floating_boat.append(Boat(i, points_list))
-                                self.grid[x:x + i, y] = [i] * i
-                                break
+                                    if (x + n, y) in occupied_places:
+                                        flag2 = False
+                                if flag2:
+                                    flag = False
+                                    points_list = []
+                                    for n in range(i):
+                                        points_list.append((x + n, y))
+                                        occupied_places.append((x + n, y))
+                                    self.floating_boat.append(Boat(i, points_list))
+                                    self.grid[x:x + i, y] = [i] * i
+                                    break
                         if k + alpha == 2:
                             if y - i >= 0 and (self.grid[x, y - i:y] == np.zeros(i)).all():
-                                flag = False
-                                points_list = []
+                                flag2 = True
                                 for n in range(i):
-                                    points_list.append((x, y - n))  # coordonnées distribuées à l'envers
-                                self.floating_boat.append(Boat(i, points_list))
-                                self.grid[x, y - i:y] = [i] * i
-                                break
+                                    if (x, y - n) in occupied_places:
+                                        flag2 = False
+                                if flag2:
+                                    flag = False
+                                    points_list = []
+                                    for n in range(i):
+                                        points_list.append((x, y - n))  # coordonnées distribuées à l'envers
+                                        occupied_places.append((x, y - n))
+                                    self.floating_boat.append(Boat(i, points_list))
+                                    self.grid[x, y - i:y] = [i] * i
+                                    break
                         if (k + alpha) == 3:
                             if x - i >= 0 and (self.grid[x - i:x, y] == np.zeros(i)).all():
-                                flag = False
-                                points_list = []
+                                flag2 = True
                                 for n in range(i):
-                                    points_list.append((x - n, y))
-                                self.floating_boat.append(Boat(i, points_list))
-                                self.grid[x - i:x, y] = [i] * i
-                                break
+                                    if (x - n, y) in occupied_places:
+                                        flag2 = False
+                                if flag2:
+                                    flag = False
+                                    points_list = []
+                                    for n in range(i):
+                                        points_list.append((x - n, y))
+                                        occupied_places.append((x - n, y))
+                                    self.floating_boat.append(Boat(i, points_list))
+                                    self.grid[x - i:x, y] = [i] * i
+                                    break
                     m += 1
 
     def init_player(self):
