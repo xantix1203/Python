@@ -3,11 +3,13 @@ import pygame as pg
 global blue_color
 global black_color
 global grey_color
+global red_color
 global list_boats
 
 blue_color = (90, 150, 255)
 black_color = (0, 0, 0)
 grey_color = (100, 100, 100)
+red_color = (178, 34, 34)
 list_boats = [1, 2, 1, 1]
 
 
@@ -36,7 +38,7 @@ class Boat:
     def partial_display(self, window):
         for coordinates_grid in self.list:
             if coordinates_grid[1] == -1:
-                self.draw_cross(window, black_color, coordinates_grid[0])
+                self.draw_cross(window, red_color, coordinates_grid[0])
 
     @staticmethod
     def draw_cross(window, color, coordinates_grid):
