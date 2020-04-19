@@ -3,6 +3,7 @@ from Grid import *
 
 class Player:
     def __init__(self, name, species="human", score=0):
+        self.remaining_shots = {}
         self.species = species
         self.name = name
         self.score = score

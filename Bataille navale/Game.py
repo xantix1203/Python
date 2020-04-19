@@ -5,13 +5,8 @@ class Game:
     def __init__(self):
         self.remaining_players = []
         self.eliminated_players = []
-        numbers_of_players = 1  # int(input("Nombre de joueurs: ")) #TODO remettre en ordre
-        if numbers_of_players == 1:
-            self.remaining_players.append(Player("Arnaud"))  # str(input("Nom du joueur: "))))
-            self.remaining_players.append(Bot())
-        else:
-            for i in range(numbers_of_players):
-                self.remaining_players.append(Player(str(input("Nom du joueur {}: ".format(i + 1)))))
+        number_of_players = self.init_get_number_of_players()
+        self.remaining_players = self.init_get_players(number_of_players)
         for player in self.remaining_players:
             opponents_list = list(self.remaining_players)
             opponents_list.remove(player)
@@ -37,3 +32,19 @@ class Game:
             print("liste bateaux {}".format(player))
             for boat in player.grid.floating_boat:
                 print(boat.list, boat.state)
+
+    @staticmethod
+    def init_get_number_of_players():
+        return 2
+
+    @staticmethod
+    def init_get_players(number_of_players):
+        if number_of_players == 1:
+            return [Player("Arnaud")] + [Bot()]
+        elif number_of_players == 2:
+            return [Player("Arnaud")] + [Player("Barry")]
+        else:
+            players_list = []
+            for i in range(number_of_players):
+                players_list.append((str(input("Nom du joueur {}: ".format(i + 1)))))
+            return players_list
