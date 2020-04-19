@@ -12,13 +12,27 @@ class Game:
         else:
             for i in range(numbers_of_players):
                 self.remaining_players.append(Player(str(input("Nom du joueur {}: ".format(i + 1)))))
+        for player in self.remaining_players:
+            opponents_list = list(self.remaining_players)
+            opponents_list.remove(player)
+            for opponent in opponents_list:
+                player.occupied_spaces[opponent] = []
+
+        for player in self.remaining_players:
+            print(player)
+            print(player.grid)
 
     def round(self):
         for player in self.remaining_players:
             opponents_list = list(self.remaining_players)
             opponents_list.remove(player)
             for opponent in opponents_list:
+                print(player)
+                print(opponent)
                 player.fire(opponent, player.get_shot(opponent))
                 if not opponent.grid.floating_boat:
                     self.remaining_players.remove(opponent)
                     self.eliminated_players.append(opponent)
+            print("liste bateaux {}".format(player))
+            for boat in player.grid.floating_boat:
+                print(boat.list, boat.state)

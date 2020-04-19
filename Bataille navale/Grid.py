@@ -57,6 +57,7 @@ class Grid:
                                     points_list.append((x - n, y))
                                 self.floating_boat.append(Boat(i, points_list))
                                 self.grid[x - i:x, y] = [i] * i
+                                break
                     m += 1
 
     def init_player(self):
@@ -118,6 +119,7 @@ class Grid:
                 points_list.append((x_grid, y_grid + k))
             if flag:
                 self.floating_boat.append(Boat(i, points_list))  # creation du bateau
+                self.grid[x_grid, y_grid:y_grid + i] = [i] * i
                 for k in range(i):  # actualisation des emplacements occupés
                     occupied_spaces.append((x_grid, y_grid + k))
                 return False
@@ -131,6 +133,7 @@ class Grid:
                 points_list.append((x_grid + k, y_grid))
             if flag:
                 self.floating_boat.append(Boat(i, points_list))  # creation du bateau
+                self.grid[x_grid:x_grid + i, y_grid] = [i] * i
                 for k in range(i):  # actualisation des emplacements occupés
                     occupied_spaces.append((x_grid + k, y_grid))
                 return False

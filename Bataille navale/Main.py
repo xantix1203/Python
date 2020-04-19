@@ -1,4 +1,5 @@
 from Game import *
 
 game = Game()
-game.round()
+while len(game.remaining_players) > 1:
+    game.round()

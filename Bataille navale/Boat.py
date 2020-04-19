@@ -21,10 +21,12 @@ class Boat:
 
     def evaluate_shot(self, shot):
         for i in range(self.size):
-            if self.list[i] == shot:
+            if self.list[i][0] == shot:
                 self.state -= 1
                 self.list[i][1] = -1
+                print("touché")
                 return True, self.state == 0  # hit, sunk
+            print("1 coup dans l'eau")
         return False, False
 
     def full_display(self, window):

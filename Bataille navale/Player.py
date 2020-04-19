@@ -7,16 +7,22 @@ class Player:
         self.score = score
         self.grid = Grid(species, self.name)
         self.eliminated = False
+        self.occupied_spaces = {}
 
-    def fire(self, player, shot):
-        for boat in player.grid.floating_boat:
+    def fire(self, opponent, shot):
+        print(shot)
+        for boat in opponent.grid.floating_boat:
             hit, sunk = boat.evaluate_shot(shot)
             if sunk:
-                player.grid.floating_boat.remove(boat)
-                player.grid.sunk_boat.append(boat)
+                opponent.grid.floating_boat.remove(boat)
+                opponent.grid.sunk_boat.append(boat)
                 self.score += 1
             if hit:
                 self.score += 1
+        print(self.score)
+
+    def __str__(self):
+        return self.name
 
     def get_shot(self, opponent):
         pg.init()
@@ -36,17 +42,17 @@ class Player:
             for coordinates_grid in boat.list:
                 if coordinates_grid[1] == -1:
                     occupied_spaces.append(coordinates_grid[0])
-
+        print(occupied_spaces)
         x_grid0, y_grid0 = (0, 0)  # affichage dynamique
         x_grid, y_grid = 0, 0
         while launched:
             for event in pg.event.get():
                 if event.type == pg.MOUSEMOTION:  # affichage bateau temporaire
                     x_grid0, y_grid0 = self.event_mousemotion(event, window, all_boats, x_grid0, y_grid0)
-                if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:  # affichage bateau définitif
+                if (event.type in [pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP]) and event.button == 1:  # affichage bateau
+                    # définitif
                     launched, (x_grid, y_grid) = self.event_mousebuttondown(event, occupied_spaces)
             pg.display.flip()
-        print("ok")
         return x_grid, y_grid
 
     def event_mousemotion(self, event, window, all_boats, x_grid0, y_grid0):
