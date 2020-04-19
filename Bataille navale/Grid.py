@@ -90,7 +90,7 @@ class Grid:
     def event_mousemotion(self, event, window, vertical, i, x_grid0, y_grid0):
         x_disp, y_disp = event.pos
         x_grid, y_grid = (x_disp // 80), (y_disp // 80)
-        if vertical and y_grid < 9 - i:  # bateau vertical
+        if vertical and y_grid <= 9 - i + 1:  # bateau vertical
             for boat in self.floating_boat:
                 boat.full_display(window, black_color)
             for k in range(i):
@@ -109,7 +109,7 @@ class Grid:
     def event_mousebuttondown(self, event, occupied_spaces, vertical, i):
         x_disp, y_disp = event.pos
         x_grid, y_grid = (x_disp // 80), (y_disp // 80)
-        if vertical and y_grid < 9 - i:  # bateau vertical
+        if vertical and y_grid <= 9 - i + 1:  # bateau vertical
             points_list = []
             flag = True
             for k in range(i):  # test de validité de l'emplacement
