@@ -2,12 +2,17 @@ from Bot import *
 
 
 class Game:
-    def __init__(self):
-        self.multiplayer = self.init_get_multiplayer()
+    def __init__(self, local, serveur=True):
         self.remaining_players = []
         self.eliminated_players = []
+        if local:
+            self.init_local()
+        else:
+            self.init_network()
+
+    def init_local(self):
         number_of_players = self.init_get_number_of_players()
-        self.remaining_players = self.init_get_players(number_of_players)
+        self.remaining_players = self.init_get_players_local(number_of_players)
         for player in self.remaining_players:
             opponents_list = list(self.remaining_players)
             opponents_list.remove(player)
@@ -18,6 +23,9 @@ class Game:
         for player in self.remaining_players:
             print(player)
             print(player.grid)
+
+    def init_network(self):
+        self.remaining_players.append(Player(self.init_get_players_network()))
 
     def round(self):
         for player in self.remaining_players:
@@ -43,7 +51,7 @@ class Game:
         return 2
 
     @staticmethod
-    def init_get_players(number_of_players):
+    def init_get_players_local(number_of_players):
         if number_of_players == 1:
             return [Player("Arnaud")] + [Bot()]
         elif number_of_players == 2:
@@ -53,3 +61,7 @@ class Game:
             for i in range(number_of_players):
                 players_list.append((str(input("Nom du joueur {}: ".format(i + 1)))))
             return players_list
+
+    @staticmethod
+    def init_get_players_network():
+        return Player("Arnaud")
