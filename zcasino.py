@@ -5,7 +5,7 @@ print("Vous commencer avec: ", solde, "€")
 continuer = True
 while continuer:
     condition = False
-    while condition == False:
+    while not condition:
         condition = True
         numero = input("Entrez le numéro sur lequel vous misez: ")
         mise = input("Entrez la somme misée: ")
