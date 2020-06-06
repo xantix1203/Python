@@ -3,7 +3,7 @@ import os
 solde = 1000
 print("Vous commencer avec: ", solde, "€")
 continuer = True
-while continuer == True:
+while continuer:
     condition = False
     while condition == False:
         condition = True

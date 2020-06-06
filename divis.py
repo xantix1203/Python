@@ -1,4 +1,3 @@
-import os
 import math
 
 liste_diviseurs = []
@@ -27,4 +26,3 @@ while diviseur <= math.sqrt(nb):
 if nb != 1:
     liste_diviseurs.append(nb)
 print(liste_diviseurs)
-os.system("pause")
