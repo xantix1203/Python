@@ -14,6 +14,15 @@ class NeuralNetwork:
             a = sigmoid(np.dot(w, a) + b)
         return a
 
+    def evaluate(self, test_data):
+        """Return the number of test inputs for which the neural
+        network outputs the correct result. Note that the neural
+        network's output is assumed to be the index of whichever
+        neuron in the final layer has the highest activation."""
+        test_results = [(np.argmax(self.feed_forward(x)), y)
+                        for (x, y) in test_data]
+        return sum(int(x == y) for (x, y) in test_results)
+
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
         gradient for the cost function C_x.  ``nabla_b`` and
@@ -30,10 +39,16 @@ class NeuralNetwork:
             zs.append(z)
             activation = sigmoid(z)
             activations.append(activation)
-        delta = self.cost_derivative(activations[-1], y) * \
-                sigmoid_prime(zs[-1])
+        delta = self.cost_derivative(activations[-1], y) * sigmoid_prime(zs[-1])
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
+        for layer in range(2, self.num_layers):
+            z = zs[-layer]
+            sp = sigmoid_prime(z)
+            delta = np.dot(self.weights[-layer + 1].transpose(), delta) * sp
+            nabla_b[-layer] = delta
+            nabla_w[-layer] = np.dot(delta, activations[-layer - 1].transpose())
+        return nabla_b, nabla_w
 
     def update_mini_batch(self, mini_batch, eta):
         """Update the network's weights and biases by applying
@@ -58,8 +73,6 @@ class NeuralNetwork:
         network will be evaluated against the test data after each
         epoch, and partial progress printed out.  This is useful for
         tracking progress, but slows things down substantially."""
-        if test_data:
-            n_test = len(test_data)
         n = len(training_data)
         for j in range(epochs):
             random.shuffle(training_data)
@@ -68,10 +81,11 @@ class NeuralNetwork:
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)
             if test_data:
-                print("Epoch {0}: {1} / {2}").format(
-                    j, self.evaluate(test_data), n_test)  # TODO write evaluate
+                n_test = len(test_data)
+                print("Epoch {0}: {1} / {2}".format(
+                    j, self.evaluate(test_data), n_test))
             else:
-                print("Epoch {0} complete").format(j)
+                print("Epoch {0} complete".format(j))
 
     @staticmethod
     def cost_derivative(output_activations, y):
