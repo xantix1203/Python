@@ -1,0 +1,19 @@
+[project]
+name = "bet-game"
+version = "0.1.0"
+description = "A local, Pygame-based party game for two players: rounds of minigames, impro scenarios, and gages for the loser."
+requires-python = ">=3.9"
+dependencies = [
+    "pygame>=2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+
+# Real game content (dares, simulations, duels) is personal, not project
+# config — never published. Keep the .example.py templates tracked so the
+# registration pattern stays documented.
+/private/*
+!/private/__init__.py
+!/private/*.example.py
