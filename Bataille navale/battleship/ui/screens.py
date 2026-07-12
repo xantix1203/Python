@@ -5,52 +5,25 @@ does for the board itself.
 
 import pygame as pg
 
-from ..config import COLOR_BLACK, COLOR_BLUE, COLOR_DARK_GREY, COLOR_GREY, COLOR_RED, COLOR_WHITE, NETWORK_PORT, WINDOW_SIZE
+from ..config import (
+    COLOR_BLACK,
+    COLOR_BLUE,
+    COLOR_DARK_GREY,
+    COLOR_RED,
+    COUNTRIES,
+    NETWORK_PORT,
+    WINDOW_SIZE,
+    resolve_nickname,
+)
 from ..models.bot import Bot
 from ..models.player import Player
 from ..network.connection import Connection, ConnectAttempt, HostListener, get_local_ip
+from . import sound
 from .events import quit_if_closed
+from .widgets import Button, Dropdown, TextBox
 
 _TITLE_FONT_SIZE = 48
 _LABEL_FONT_SIZE = 28
-_MAX_NAME_LENGTH = 16
-
-
-class _TextBox:
-    def __init__(self, rect, initial_text):
-        self.rect = pg.Rect(rect)
-        self.text = initial_text
-        self.active = False
-
-    def handle_event(self, event):
-        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-            self.active = self.rect.collidepoint(event.pos)
-        elif event.type == pg.KEYDOWN and self.active:
-            if event.key == pg.K_BACKSPACE:
-                self.text = self.text[:-1]
-            elif event.unicode.isprintable() and len(self.text) < _MAX_NAME_LENGTH:
-                self.text += event.unicode
-
-    def draw(self, window, font):
-        pg.draw.rect(window, COLOR_WHITE, self.rect)
-        pg.draw.rect(window, COLOR_BLACK if self.active else COLOR_GREY, self.rect, 2)
-        text_surface = font.render(self.text, True, COLOR_BLACK)
-        y = self.rect.y + (self.rect.height - text_surface.get_height()) // 2
-        window.blit(text_surface, (self.rect.x + 8, y))
-
-
-class _Button:
-    def __init__(self, rect, label):
-        self.rect = pg.Rect(rect)
-        self.label = label
-
-    def is_clicked(self, event):
-        return event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and self.rect.collidepoint(event.pos)
-
-    def draw(self, window, font, selected=False):
-        pg.draw.rect(window, COLOR_BLACK if selected else COLOR_GREY, self.rect)
-        text_surface = font.render(self.label, True, COLOR_WHITE)
-        window.blit(text_surface, text_surface.get_rect(center=self.rect.center))
 
 
 def run_setup_menu(window):
@@ -62,23 +35,47 @@ def run_setup_menu(window):
     label_font = pg.font.Font(None, _LABEL_FONT_SIZE)
     center_x = WINDOW_SIZE // 2
 
-    player1_box = _TextBox((center_x - 150, 160, 300, 40), "Joueur 1")
-    player2_box = _TextBox((center_x - 150, 340, 300, 40), "Joueur 2")
-    bot_button = _Button((center_x - 320, 240, 200, 50), "CONTRE BOT")
-    player_button = _Button((center_x - 100, 240, 200, 50), "CONTRE JOUEUR")
-    network_button = _Button((center_x + 120, 240, 200, 50), "EN RÉSEAU")
-    start_button = _Button((center_x - 100, 440, 200, 60), "Commencer")
-    host_button = _Button((center_x - 220, 440, 200, 60), "HÉBERGER")
-    join_button = _Button((center_x + 20, 440, 200, 60), "REJOINDRE")
+    player1_box = TextBox((center_x - 200, 160, 220, 40), "Joueur 1")
+    player2_box = TextBox((center_x - 200, 340, 220, 40), "Joueur 2")
+    player1_country = Dropdown((center_x + 30, 160, 160, 40), COUNTRIES)
+    player2_country = Dropdown((center_x + 30, 340, 160, 40), COUNTRIES)
+    bot_button = Button((center_x - 320, 240, 200, 50), "CONTRE BOT")
+    player_button = Button((center_x - 100, 240, 200, 50), "CONTRE JOUEUR")
+    network_button = Button((center_x + 120, 240, 200, 50), "EN RÉSEAU")
+    start_button = Button((center_x - 100, 440, 200, 60), "Commencer")
+    host_button = Button((center_x - 220, 440, 200, 60), "HÉBERGER")
+    join_button = Button((center_x + 20, 440, 200, 60), "REJOINDRE")
 
     mode = "bot"
 
     while True:
         for event in pg.event.get():
             quit_if_closed(event)
-            player1_box.handle_event(event)
+
+            # Dropdowns get first look. If one was already open, this click is
+            # "theirs" (selecting an option, or closing it) -- don't also let
+            # it fall through to a button/box that happens to sit underneath.
+            dropdown_was_open = player1_country.open or (mode == "player" and player2_country.open)
+            player1_country.handle_event(event)
             if mode == "player":
+                player2_country.handle_event(event)
+            if dropdown_was_open:
+                continue
+
+            # A name box locks the instant it loses focus for the first time,
+            # revealing the resolved nickname right there in the box.
+            was_active = player1_box.active
+            player1_box.handle_event(event)
+            if was_active and not player1_box.active and not player1_box.locked:
+                player1_box.text = resolve_nickname(player1_box.text) or "Joueur 1"
+                player1_box.locked = True
+
+            if mode == "player":
+                was_active = player2_box.active
                 player2_box.handle_event(event)
+                if was_active and not player2_box.active and not player2_box.locked:
+                    player2_box.text = resolve_nickname(player2_box.text) or "Joueur 2"
+                    player2_box.locked = True
 
             if bot_button.is_clicked(event):
                 mode = "bot"
@@ -87,42 +84,67 @@ def run_setup_menu(window):
             elif network_button.is_clicked(event):
                 mode = "network"
             elif mode in ("bot", "player") and start_button.is_clicked(event):
-                name1 = player1_box.text.strip() or "Joueur 1"
+                # resolve_nickname is idempotent -- harmless if the box already locked-in a resolved name.
+                name1 = resolve_nickname(player1_box.text) or "Joueur 1"
+                country1 = player1_country.selected
+                sound.play_intro(country1)
                 if mode == "bot":
-                    return "local", [Player(name1), Bot()]
-                name2 = player2_box.text.strip() or "Joueur 2"
-                return "local", [Player(name1), Player(name2)]
+                    return "local", [Player(name1, country=country1), Bot()]
+                name2 = resolve_nickname(player2_box.text) or "Joueur 2"
+                country2 = player2_country.selected
+                sound.play_intro(country2)
+                return "local", [Player(name1, country=country1), Player(name2, country=country2)]
             elif mode == "network" and host_button.is_clicked(event):
-                name1 = player1_box.text.strip() or "Joueur 1"
+                name1 = resolve_nickname(player1_box.text) or "Joueur 1"
+                country1 = player1_country.selected
+                sound.play_intro(country1)
                 connection = _run_host_screen(window, label_font, title_font)
                 if connection is not None:
-                    return "network", (Player(name1), connection, True)
+                    return "network", (Player(name1, country=country1), connection, True)
             elif mode == "network" and join_button.is_clicked(event):
-                name1 = player1_box.text.strip() or "Joueur 1"
+                name1 = resolve_nickname(player1_box.text) or "Joueur 1"
+                country1 = player1_country.selected
                 connection = _run_join_screen(window, label_font, title_font)
                 if connection is not None:
-                    return "network", (Player(name1), connection, False)
+                    sound.play_intro(country1)
+                    return "network", (Player(name1, country=country1), connection, False)
 
         window.fill(COLOR_BLUE)
         title_surface = title_font.render("Bataille navale", True, COLOR_BLACK)
         window.blit(title_surface, title_surface.get_rect(center=(center_x, 80)))
 
-        window.blit(label_font.render("Nom du joueur 1 :", True, COLOR_BLACK), (player1_box.rect.x, player1_box.rect.y - 30))
+        window.blit(
+            label_font.render("Nom du joueur 1 :", True, COLOR_BLACK), (player1_box.rect.x, player1_box.rect.y - 30)
+        )
         player1_box.draw(window, label_font)
+        window.blit(
+            label_font.render("Pays :", True, COLOR_BLACK), (player1_country.rect.x, player1_country.rect.y - 30)
+        )
 
         bot_button.draw(window, label_font, selected=mode == "bot")
         player_button.draw(window, label_font, selected=mode == "player")
         network_button.draw(window, label_font, selected=mode == "network")
 
         if mode == "player":
-            window.blit(label_font.render("Nom du joueur 2 :", True, COLOR_BLACK), (player2_box.rect.x, player2_box.rect.y - 30))
+            window.blit(
+                label_font.render("Nom du joueur 2 :", True, COLOR_BLACK),
+                (player2_box.rect.x, player2_box.rect.y - 30),
+            )
             player2_box.draw(window, label_font)
+            window.blit(
+                label_font.render("Pays :", True, COLOR_BLACK), (player2_country.rect.x, player2_country.rect.y - 30)
+            )
 
         if mode in ("bot", "player"):
             start_button.draw(window, label_font)
         else:
             host_button.draw(window, label_font)
             join_button.draw(window, label_font)
+
+        # Drawn last so an open dropdown's option list renders on top of everything else.
+        player1_country.draw(window, label_font)
+        if mode == "player":
+            player2_country.draw(window, label_font)
 
         pg.display.flip()
 
@@ -159,9 +181,9 @@ def _run_host_screen(window, label_font, title_font):
 def _run_join_screen(window, label_font, title_font):
     """Blocks until the player connects successfully or backs out."""
     center_x = WINDOW_SIZE // 2
-    ip_box = _TextBox((center_x - 150, 220, 300, 40), "")
-    connect_button = _Button((center_x - 220, 300, 200, 50), "Connecter")
-    back_button = _Button((center_x + 20, 300, 200, 50), "Retour")
+    ip_box = TextBox((center_x - 150, 220, 300, 40), "")
+    connect_button = Button((center_x - 220, 300, 200, 50), "Connecter")
+    back_button = Button((center_x + 20, 300, 200, 50), "Retour")
 
     attempt = None
     error_message = None

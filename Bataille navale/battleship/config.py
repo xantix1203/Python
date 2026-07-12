@@ -1,5 +1,8 @@
 """Shared constants for the battleship game."""
 
+import json
+from pathlib import Path
+
 BOARD_SIZE = 10
 CELL_SIZE = 80
 WINDOW_SIZE = BOARD_SIZE * CELL_SIZE
@@ -26,3 +29,25 @@ BOAT_TYPE_NAMES = {
     4: "croiseur",
     5: "porte-avion",
 }
+
+COUNTRIES = ["Pakistan", "China", "Japan", "USA", "France", "Canada"]
+
+# Nicknames live outside version control (see private/nicknames.example.json
+# for the expected format) since the mapping is personal, not project config.
+_PRIVATE_DIR = Path(__file__).resolve().parent.parent / "private"
+_NICKNAMES_PATH = _PRIVATE_DIR / "nicknames.json"
+
+
+def _load_nicknames():
+    if not _NICKNAMES_PATH.is_file():
+        return {}
+    with _NICKNAMES_PATH.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
+# Keys are lowercase for case-insensitive, exact-match lookup.
+NICKNAMES = _load_nicknames()
+
+
+def resolve_nickname(name):
+    return NICKNAMES.get(name.strip().lower(), name.strip())

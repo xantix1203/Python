@@ -1,3 +1,9 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.DS_Store
+
+# Personal/local-only assets: nicknames and per-country sounds. Never published.
+# Keep the .example.json template tracked so the format stays documented.
+/private/*
+!/private/nicknames.example.json

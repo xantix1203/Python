@@ -19,7 +19,7 @@ from ..config import (
 _font = None
 
 
-def _get_font():
+def get_font():
     global _font
     if _font is None:
         _font = pg.font.Font(None, FONT_SIZE)
@@ -47,7 +47,7 @@ def new_window(caption):
 def draw_status_bar(window, lines):
     bar_rect = pg.Rect(0, WINDOW_SIZE, WINDOW_SIZE, STATUS_BAR_HEIGHT)
     pg.draw.rect(window, COLOR_DARK_GREY, bar_rect)
-    font = _get_font()
+    font = get_font()
     line_height = font.get_linesize()
     top = WINDOW_SIZE + (STATUS_BAR_HEIGHT - line_height * len(lines)) // 2
     for i, line in enumerate(lines):

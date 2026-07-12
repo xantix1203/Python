@@ -6,9 +6,10 @@ from .grid import Grid
 class Player:
     species = "human"
 
-    def __init__(self, name, score=0):
+    def __init__(self, name, score=0, country=None):
         self.name = name
         self.score = score
+        self.country = country
         self.grid = Grid()
         self.shots_fired = {}  # opponent -> list of (x, y) already fired at
 

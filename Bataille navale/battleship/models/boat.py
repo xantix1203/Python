@@ -4,9 +4,10 @@ from ..config import BOAT_TYPE_NAMES
 
 
 class Boat:
-    def __init__(self, size, cells):
+    def __init__(self, size, cells, name=None):
         self.size = size
         self.type = BOAT_TYPE_NAMES[size]
+        self.name = name if name else self.type
         self.cells = [[cell, False] for cell in cells]  # [(x, y), is_hit]
         self.hits_remaining = size
 

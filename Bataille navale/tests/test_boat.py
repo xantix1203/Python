@@ -1,6 +1,19 @@
 from battleship.models.boat import Boat
 
 
+def test_default_name_falls_back_to_type():
+    boat = Boat(3, [(0, 0), (0, 1), (0, 2)])
+
+    assert boat.name == boat.type == "sous-marin"
+
+
+def test_custom_name_is_kept_as_given():
+    boat = Boat(3, [(0, 0), (0, 1), (0, 2)], name="Titanic")
+
+    assert boat.name == "Titanic"
+    assert boat.type == "sous-marin"  # type is still derived from size, independent of the custom name
+
+
 def test_register_hit_marks_cell_and_reduces_health():
     boat = Boat(2, [(0, 0), (0, 1)])
 

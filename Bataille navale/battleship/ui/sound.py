@@ -1,16 +1,26 @@
-"""Procedurally synthesized sound effects — no external audio assets needed.
+"""Sound effects: a per-country file (`private/sounds/<country>/<event>.wav`)
+if one exists, falling back to a procedurally synthesized default tone
+(numpy + pygame.mixer, no external assets) when it doesn't. `intro` has no
+synthesized fallback -- it only plays if a file exists for that country.
 
-Generates short tones/melodies with numpy and hands them to pygame's mixer.
+The sounds live under `private/` (outside version control, see the project
+README) rather than `battleship/assets/` since they're personal, user-supplied
+files, not project assets.
+
 If there's no audio device available, `init()` just leaves sound disabled
 and every play_* call becomes a no-op rather than crashing the game.
 """
 
+from pathlib import Path
+
 import numpy as np
 import pygame as pg
 
+_SOUNDS_DIR = Path(__file__).resolve().parent.parent.parent / "private" / "sounds"
 _NOTE_VOLUME = 0.4
 _enabled = False
-_sounds = {}
+_default_sounds = {}
+_country_sounds = {}  # (country, event) -> Sound or None (None = no file, checked already)
 
 
 def init():
@@ -21,31 +31,49 @@ def init():
         _enabled = False
         return
     _enabled = True
-    _sounds["hit"] = _make_sound([880], 120)
-    _sounds["miss"] = _make_sound([180], 150)
-    _sounds["sunk"] = _make_sound([600, 450, 300], 120)
-    _sounds["victory"] = _make_sound([523, 659, 784], 150)
+    _default_sounds["hit"] = _make_sound([880], 120)
+    _default_sounds["miss"] = _make_sound([180], 150)
+    _default_sounds["sunk"] = _make_sound([600, 450, 300], 120)
+    _default_sounds["victory"] = _make_sound([523, 659, 784], 150)
 
 
-def play_hit():
-    _play("hit")
+def play_hit(country=None):
+    _play("hit", country)
 
 
-def play_miss():
-    _play("miss")
+def play_miss(country=None):
+    _play("miss", country)
 
 
-def play_sunk():
-    _play("sunk")
+def play_sunk(country=None):
+    _play("sunk", country)
 
 
 def play_victory():
-    _play("victory")
+    _play("victory", None)
 
 
-def _play(name):
-    if _enabled:
-        _sounds[name].play()
+def play_intro(country=None):
+    if not _enabled or country is None:
+        return
+    sound = _country_sound("intro", country)
+    if sound is not None:
+        sound.play()
+
+
+def _play(event_name, country):
+    if not _enabled:
+        return
+    sound = _country_sound(event_name, country) if country else None
+    (sound if sound is not None else _default_sounds[event_name]).play()
+
+
+def _country_sound(event_name, country):
+    key = (country, event_name)
+    if key not in _country_sounds:
+        path = _SOUNDS_DIR / country.lower() / f"{event_name}.wav"
+        _country_sounds[key] = pg.mixer.Sound(str(path)) if path.is_file() else None
+    return _country_sounds[key]
 
 
 def _make_sound(note_frequencies, note_duration_ms):

@@ -5,9 +5,10 @@ class needs to know Pygame exists.
 
 import pygame as pg
 
-from ..config import BOAT_TYPE_NAMES, COLOR_BLACK, COLOR_BLUE, COLOR_GREY, COLOR_RED, FLEET
+from ..config import BOAT_TYPE_NAMES, COLOR_BLACK, COLOR_BLUE, COLOR_GREY, COLOR_RED, FLEET, WINDOW_SIZE
 from . import board_view
 from .events import pump_and_wait, quit_if_closed
+from .widgets import TextBox
 
 DIRECTIONS = {"vertical": (0, 1), "horizontal": (1, 0)}
 
@@ -20,7 +21,8 @@ def place_boats_interactively(grid, window, player_name):
                 f"Mise en place : {player_name}",
                 f"Placez votre {BOAT_TYPE_NAMES[size]} ({size} cases) — R pour pivoter",
             ]
-            vertical = _place_one_boat(grid, window, size, vertical, status_lines)
+            boat, vertical = _place_one_boat(grid, window, size, vertical, status_lines)
+            _prompt_boat_name(window, grid, boat, size)
 
 
 def _place_one_boat(grid, window, size, vertical, status_lines):
@@ -43,8 +45,27 @@ def _place_one_boat(grid, window, size, vertical, status_lines):
                 x, y = board_view.cell_from_pos(event.pos)
                 direction = DIRECTIONS["vertical" if vertical else "horizontal"]
                 if grid.can_place(x, y, size, direction):
-                    grid.place(x, y, size, direction)
-                    return vertical
+                    boat = grid.place(x, y, size, direction)
+                    return boat, vertical
+        pg.display.flip()
+
+
+def _prompt_boat_name(window, grid, boat, size):
+    status_lines = [f"Nommez votre {BOAT_TYPE_NAMES[size]} (Entrée pour valider)"]
+    box = TextBox((WINDOW_SIZE // 2 - 150, WINDOW_SIZE // 2 - 20, 300, 40), "")
+    box.active = True
+    font = board_view.get_font()
+    while True:
+        for event in pg.event.get():
+            quit_if_closed(event)
+            if event.type == pg.KEYDOWN and event.key in (pg.K_RETURN, pg.K_KP_ENTER):
+                typed = box.text.strip()
+                if typed:
+                    boat.name = typed
+                return
+            box.handle_event(event)
+        _redraw_placement_board(window, grid, status_lines)
+        box.draw(window, font)
         pg.display.flip()
 
 
@@ -94,7 +115,7 @@ def _redraw_firing_board(window, shooter, opponent, status_lines, cursor_cell=No
 
 def flash_result(window, shooter, opponent, shot, hit, sunk_boat, duration_ms=900):
     if sunk_boat is not None:
-        message = f"{shooter.name} a coulé le {sunk_boat.type} de {opponent.name} !"
+        message = f"{shooter.name} a coulé le {sunk_boat.name} de {opponent.name} !"
     elif hit:
         message = f"{shooter.name} a touché un bateau !"
     else:

@@ -24,11 +24,11 @@ def get_shot(player, opponent, window):
 def make_on_result(window):
     def on_result(player, opponent, shot, hit, sunk_boat):
         if sunk_boat is not None:
-            sound.play_sunk()
+            sound.play_sunk(player.country)
         elif hit:
-            sound.play_hit()
+            sound.play_hit(player.country)
         else:
-            sound.play_miss()
+            sound.play_miss(player.country)
         input_handler.flash_result(window, player, opponent, shot, hit, sunk_boat)
 
     return on_result

@@ -31,9 +31,9 @@ class RemoteFleetView:
         self.pending_hit_cells = []
         self.sunk_boats = []
 
-    def record_result(self, shot, hit, sunk, boat_cells):
+    def record_result(self, shot, hit, sunk, boat_cells, boat_name=None):
         if sunk:
-            boat = Boat(len(boat_cells), boat_cells)
+            boat = Boat(len(boat_cells), boat_cells, name=boat_name)
             for cell in boat.cells:
                 cell[1] = True
             self.sunk_boats.append(boat)
@@ -70,14 +70,15 @@ def play_networked_match(window, local_player, connection, is_host):
                 if sunk:
                     local_player.score += 1
             boat_cells = [tuple(cell) for cell in result.get("boat_cells", [])]
-            remote_view.record_result(shot, hit, sunk, boat_cells)
+            boat_name = result.get("boat_name")
+            remote_view.record_result(shot, hit, sunk, boat_cells, boat_name)
             _flash_attack_result(window, local_player.name, opponent_name, my_shots, remote_view, hit, sunk)
             if hit and sunk:
-                sound.play_sunk()
+                sound.play_sunk(local_player.country)
             elif hit:
-                sound.play_hit()
+                sound.play_hit(local_player.country)
             else:
-                sound.play_miss()
+                sound.play_miss(local_player.country)
             if result["game_over"]:
                 break
         else:
@@ -88,12 +89,13 @@ def play_networked_match(window, local_player, connection, is_host):
             reply = {"type": "result", "hit": hit, "sunk": sunk_boat is not None, "game_over": game_over}
             if sunk_boat is not None:
                 reply["boat_cells"] = [cell for cell, _ in sunk_boat.cells]
+                reply["boat_name"] = sunk_boat.name
             connection.send(reply)
             if hit:
                 opponent_score += 1
                 if sunk_boat is not None:
                     opponent_score += 1
-            _flash_defense_result(window, local_player, opponent_name, hit, sunk_boat is not None)
+            _flash_defense_result(window, local_player, opponent_name, hit, sunk_boat)
             if game_over:
                 break
         is_my_turn = not is_my_turn
@@ -187,7 +189,7 @@ def _redraw_own_board(window, local_player, status_lines):
 
 def _flash_attack_result(window, shooter_name, opponent_name, my_shots, remote_view, hit, sunk, duration_ms=900):
     if sunk:
-        message = f"{shooter_name} a coulé un bateau de {opponent_name} !"
+        message = f"{shooter_name} a coulé le {remote_view.sunk_boats[-1].name} de {opponent_name} !"
     elif hit:
         message = f"{shooter_name} a touché un bateau !"
     else:
@@ -197,9 +199,9 @@ def _flash_attack_result(window, shooter_name, opponent_name, my_shots, remote_v
     pump_and_wait(duration_ms)
 
 
-def _flash_defense_result(window, local_player, opponent_name, hit, sunk, duration_ms=900):
-    if sunk:
-        message = f"{opponent_name} a coulé un de vos bateaux !"
+def _flash_defense_result(window, local_player, opponent_name, hit, sunk_boat, duration_ms=900):
+    if sunk_boat is not None:
+        message = f"{opponent_name} a coulé votre {sunk_boat.name} !"
     elif hit:
         message = f"{opponent_name} a touché un de vos bateaux !"
     else:
