@@ -10,6 +10,7 @@ class Player:
         self.name = name
         self.score = score
         self.country = country
+        self.energy = 0  # LAN free-targeting specials currency; unused by hotseat/bot play
         self.grid = Grid()
         self.shots_fired = {}  # opponent -> list of (x, y) already fired at
 

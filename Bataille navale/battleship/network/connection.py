@@ -61,26 +61,74 @@ class Connection:
 
 
 class HostListener:
-    """Starts listening immediately; poll() until someone connects."""
+    """Starts listening immediately and keeps accepting peers in the
+    background; poll() returns each newly-joined Connection one at a time.
 
-    def __init__(self, port):
+    Unlike a 1:1 listener this stays open for the whole lobby so the host can
+    gather several players (up to `backlog`) before starting the match.
+    """
+
+    def __init__(self, port, backlog=8):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._socket.bind(("0.0.0.0", port))
-        self._socket.listen(1)
-        self._result = queue.Queue(maxsize=1)
+        self._socket.listen(backlog)
+        self._joined = queue.Queue()
         threading.Thread(target=self._accept_loop, daemon=True).start()
 
     def _accept_loop(self):
-        peer_socket, _address = self._socket.accept()  # blocks until someone joins
-        self._result.put(Connection(peer_socket))
+        while True:
+            try:
+                peer_socket, _address = self._socket.accept()  # blocks until someone joins
+            except OSError:
+                return  # socket closed -- stop accepting
+            self._joined.put(Connection(peer_socket))
 
     def poll(self):
-        """Non-blocking: returns a Connection once a peer has joined, else None."""
+        """Non-blocking: returns the next newly-joined Connection, else None."""
         try:
-            return self._result.get_nowait()
+            return self._joined.get_nowait()
         except queue.Empty:
             return None
+
+    def close(self):
+        self._socket.close()
+
+
+class LoopbackConnection:
+    """An in-process stand-in for Connection, used so the host's own player can
+    talk to its authoritative server through the exact same send/poll/close
+    surface as a remote socket client -- one client code path for everyone.
+
+    Created in linked pairs by loopback_pair(): what one end sends, the other
+    polls. There is no reader thread and nothing to disconnect, so poll() never
+    raises ConnectionError.
+    """
+
+    def __init__(self, incoming, outgoing):
+        self._incoming = incoming
+        self._outgoing = outgoing
+
+    def send(self, message):
+        self._outgoing.put(message)
+
+    def poll(self):
+        try:
+            return self._incoming.get_nowait()
+        except queue.Empty:
+            return None
+
+    def close(self):
+        pass
+
+
+def loopback_pair():
+    """Return (end_a, end_b): two LoopbackConnections where a.send -> b.poll
+    and b.send -> a.poll.
+    """
+    a_to_b = queue.Queue()
+    b_to_a = queue.Queue()
+    return LoopbackConnection(b_to_a, a_to_b), LoopbackConnection(a_to_b, b_to_a)
 
 
 class ConnectAttempt:

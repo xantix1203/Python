@@ -11,6 +11,8 @@ from ..config import (
     COLOR_DARK_GREY,
     COLOR_RED,
     COUNTRIES,
+    MAX_PLAYERS,
+    MENU_WINDOW_SIZE,
     NETWORK_PORT,
     WINDOW_SIZE,
     resolve_nickname,
@@ -27,13 +29,15 @@ _LABEL_FONT_SIZE = 28
 
 
 def run_setup_menu(window):
-    """Blocks until the player configures a match. Returns either
-    ("local", [players]) for hotseat/bot play, or
-    ("network", (local_player, connection, is_host)) for LAN play.
+    """Blocks until the player configures a match. Returns one of:
+    ("local", [players])            -- hotseat/bot play (2 players)
+    ("host",  (host_player, joined))-- LAN host; joined is a list of
+                                       {"conn", "name", "country"} for each peer
+    ("join",  (local_player, conn)) -- LAN joiner already connected to a host
     """
     title_font = pg.font.Font(None, _TITLE_FONT_SIZE)
     label_font = pg.font.Font(None, _LABEL_FONT_SIZE)
-    center_x = WINDOW_SIZE // 2
+    center_x = MENU_WINDOW_SIZE[0] // 2
 
     player1_box = TextBox((center_x - 200, 160, 220, 40), "Joueur 1")
     player2_box = TextBox((center_x - 200, 340, 220, 40), "Joueur 2")
@@ -98,16 +102,18 @@ def run_setup_menu(window):
                 name1 = resolve_nickname(player1_box.text) or "Joueur 1"
                 country1 = player1_country.selected
                 sound.play_intro(country1)
-                connection = _run_host_screen(window, label_font, title_font)
-                if connection is not None:
-                    return "network", (Player(name1, country=country1), connection, True)
+                host_player = Player(name1, country=country1)
+                joined = _run_host_lobby(window, host_player, label_font, title_font)
+                if joined is not None:
+                    return "host", (host_player, joined)
             elif mode == "network" and join_button.is_clicked(event):
                 name1 = resolve_nickname(player1_box.text) or "Joueur 1"
                 country1 = player1_country.selected
                 connection = _run_join_screen(window, label_font, title_font)
                 if connection is not None:
                     sound.play_intro(country1)
-                    return "network", (Player(name1, country=country1), connection, False)
+                    connection.send({"type": "join", "name": name1, "country": country1})
+                    return "join", (Player(name1, country=country1), connection)
 
         window.fill(COLOR_BLUE)
         title_surface = title_font.render("Bataille navale", True, COLOR_BLACK)
@@ -149,38 +155,72 @@ def run_setup_menu(window):
         pg.display.flip()
 
 
-def _run_host_screen(window, label_font, title_font):
-    """Blocks until a peer connects. No 'back' option here on purpose: the
-    listening socket is bound to a fixed port for as long as this runs, and
-    tearing that down cleanly to go back adds real complexity (see
-    connection.py's HostListener) for a case that isn't worth it in v1 —
-    closing the window is the only way out, same as other blocking waits
-    elsewhere in the app.
+def _run_host_lobby(window, host_player, label_font, title_font):
+    """Gather 1..MAX_PLAYERS-1 peers into a lobby, then START the match. Returns
+    a seat-ordered list of {"conn", "name", "country"} for the joiners (the host
+    itself is seat 0, added by the caller). No 'back' option on purpose: the
+    listening socket is bound for as long as this runs; closing the window is
+    the way out, same as other blocking waits in the app.
     """
-    center_x = WINDOW_SIZE // 2
+    center_x = MENU_WINDOW_SIZE[0] // 2
     listener = HostListener(NETWORK_PORT)
     local_ip = get_local_ip()
+    start_button = Button((center_x - 100, 640, 200, 60), "COMMENCER")
+
+    pending = []  # accepted, awaiting their join message
+    joined = []  # [{"conn", "name", "country"}]
 
     while True:
         for event in pg.event.get():
             quit_if_closed(event)
+            if len(joined) >= 1 and start_button.is_clicked(event):
+                listener.close()
+                return joined
 
         connection = listener.poll()
-        if connection is not None:
-            return connection
+        if connection is not None and len(joined) < MAX_PLAYERS - 1:
+            pending.append(connection)
+
+        _drain_joins(pending, joined)
 
         window.fill(COLOR_BLUE)
-        title_surface = title_font.render("En attente d'un adversaire...", True, COLOR_BLACK)
-        window.blit(title_surface, title_surface.get_rect(center=(center_x, 140)))
-        ip_surface = label_font.render(f"Votre IP : {local_ip}    Port : {NETWORK_PORT}", True, COLOR_BLACK)
-        window.blit(ip_surface, ip_surface.get_rect(center=(center_x, 220)))
+        title = title_font.render("Salon réseau", True, COLOR_BLACK)
+        window.blit(title, title.get_rect(center=(center_x, 90)))
+        window.blit(
+            label_font.render(f"Votre IP : {local_ip}    Port : {NETWORK_PORT}", True, COLOR_BLACK),
+            (center_x - 240, 150),
+        )
+        roster = [f"1. {host_player.name} (vous)"] + [f"{i + 2}. {peer['name']}" for i, peer in enumerate(joined)]
+        for i, line in enumerate(roster):
+            window.blit(label_font.render(line, True, COLOR_BLACK), (center_x - 240, 210 + i * 34))
+
+        hint = "Prêt à commencer." if joined else "En attente de joueurs..."
+        window.blit(label_font.render(hint, True, COLOR_DARK_GREY), (center_x - 240, 210 + len(roster) * 34 + 10))
+        start_button.draw(window, label_font, selected=bool(joined))
         pg.display.flip()
         pg.time.wait(16)
 
 
+def _drain_joins(pending, joined):
+    """Move any pending peers that have sent their `join` message into `joined`,
+    and drop any that disconnected before doing so.
+    """
+    for connection in list(pending):
+        try:
+            message = connection.poll()
+        except ConnectionError:
+            pending.remove(connection)
+            continue
+        if message is not None and message.get("type") == "join":
+            pending.remove(connection)
+            joined.append(
+                {"conn": connection, "name": message.get("name", "Joueur"), "country": message.get("country")}
+            )
+
+
 def _run_join_screen(window, label_font, title_font):
     """Blocks until the player connects successfully or backs out."""
-    center_x = WINDOW_SIZE // 2
+    center_x = MENU_WINDOW_SIZE[0] // 2
     ip_box = TextBox((center_x - 150, 220, 300, 40), "")
     connect_button = Button((center_x - 220, 300, 200, 50), "Connecter")
     back_button = Button((center_x + 20, 300, 200, 50), "Retour")

@@ -1,9 +1,12 @@
 """Entry point: setup menu, window, round loop, end screen."""
 
+import threading
+
 import pygame as pg
 
 from battleship.engine.game import Game
-from battleship.network.match import play_networked_match
+from battleship.network import client, server
+from battleship.network.connection import loopback_pair
 from battleship.ui import board_view, input_handler, screens, sound
 
 
@@ -36,28 +39,47 @@ def make_on_result(window):
 
 def main():
     pg.init()
-    window = board_view.new_window("Bataille navale")
+    window = board_view.new_menu_window("Bataille navale")
     sound.init()
 
     mode, payload = screens.run_setup_menu(window)
+    window = board_view.new_window("Bataille navale")  # resize for the board itself
 
-    if mode == "network":
-        local_player, connection, is_host = payload
-        play_networked_match(window, local_player, connection, is_host)
+    if mode == "host":
+        _run_host(window, payload)
+    elif mode == "join":
+        local_player, connection = payload
+        client.run_client(window, connection, local_player.name)
     else:
-        players = payload
-        game = Game(players)
-        setup_fleets(players, window)
-
-        on_result = make_on_result(window)
-        while not game.is_over:
-            game.play_round(lambda player, opponent: get_shot(player, opponent, window), on_result=on_result)
-
-        if game.winner is not None:
-            sound.play_victory()
-        screens.show_end_screen(window, players, game.winner)
+        _run_local(window, payload)
 
     pg.quit()
+
+
+def _run_host(window, payload):
+    """Host both the authoritative server (background thread) and this machine's
+    own player view, wired to the server through an in-process loopback so the
+    host plays through the exact same client code path as every joiner.
+    """
+    host_player, joined = payload
+    server_end, host_end = loopback_pair()
+    endpoints = [server.Endpoint(server_end, host_player.name, host_player.country)]
+    endpoints += [server.Endpoint(peer["conn"], peer["name"], peer["country"]) for peer in joined]
+    threading.Thread(target=server.serve, args=(endpoints,), daemon=True).start()
+    client.run_client(window, host_end, host_player.name)
+
+
+def _run_local(window, players):
+    game = Game(players)
+    setup_fleets(players, window)
+
+    on_result = make_on_result(window)
+    while not game.is_over:
+        game.play_round(lambda player, opponent: get_shot(player, opponent, window), on_result=on_result)
+
+    if game.winner is not None:
+        sound.play_victory()
+    screens.show_end_screen(window, players, game.winner)
 
 
 if __name__ == "__main__":

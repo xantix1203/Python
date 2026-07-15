@@ -7,12 +7,14 @@ import pygame as pg
 from ..config import COLOR_BLACK, COLOR_GREY, COLOR_WHITE
 
 _MAX_TEXT_LENGTH = 16
+_CURSOR_BLINK_MS = 500
 
 
 class TextBox:
-    def __init__(self, rect, initial_text):
+    def __init__(self, rect, initial_text, max_length=_MAX_TEXT_LENGTH):
         self.rect = pg.Rect(rect)
         self.text = initial_text
+        self.max_length = max_length
         self.active = False
         self.locked = False
         self._edited = False
@@ -21,16 +23,21 @@ class TextBox:
         if self.locked:
             return
         if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-            self.active = self.rect.collidepoint(event.pos)
+            clicked = self.rect.collidepoint(event.pos)
+            if clicked and not self._edited:
+                # Clear the placeholder/default text (e.g. "Joueur 1") the
+                # moment the field is focused, not just on the first
+                # keystroke -- so it visibly reads as ready for input.
+                self.text = ""
+                self._edited = True
+            self.active = clicked
         elif event.type == pg.KEYDOWN and self.active:
-            if not self._edited:
-                # First keystroke clears placeholder/default text (e.g. "Joueur 1")
-                # instead of appending to it.
+            if not self._edited:  # e.g. focused some other way than a click
                 self.text = ""
                 self._edited = True
             if event.key == pg.K_BACKSPACE:
                 self.text = self.text[:-1]
-            elif event.unicode.isprintable() and len(self.text) < _MAX_TEXT_LENGTH:
+            elif event.unicode.isprintable() and len(self.text) < self.max_length:
                 self.text += event.unicode
 
     def draw(self, window, font):
@@ -39,6 +46,9 @@ class TextBox:
         text_surface = font.render(self.text, True, COLOR_BLACK)
         y = self.rect.y + (self.rect.height - text_surface.get_height()) // 2
         window.blit(text_surface, (self.rect.x + 8, y))
+        if self.active and (pg.time.get_ticks() // _CURSOR_BLINK_MS) % 2 == 0:
+            cursor_x = self.rect.x + 8 + text_surface.get_width() + 2
+            pg.draw.line(window, COLOR_BLACK, (cursor_x, y), (cursor_x, y + text_surface.get_height()), 2)
 
 
 class Button:

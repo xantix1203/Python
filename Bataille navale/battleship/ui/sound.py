@@ -34,6 +34,7 @@ def init():
     _default_sounds["hit"] = _make_sound([880], 120)
     _default_sounds["miss"] = _make_sound([180], 150)
     _default_sounds["sunk"] = _make_sound([600, 450, 300], 120)
+    _default_sounds["cast"] = _make_sound([440, 880], 100)
     _default_sounds["victory"] = _make_sound([523, 659, 784], 150)
 
 
@@ -49,6 +50,10 @@ def play_sunk(country=None):
     _play("sunk", country)
 
 
+def play_cast(country=None):
+    _play("cast", country)
+
+
 def play_victory():
     _play("victory", None)
 
@@ -57,6 +62,20 @@ def play_intro(country=None):
     if not _enabled or country is None:
         return
     sound = _country_sound("intro", country)
+    if sound is not None:
+        sound.play()
+
+
+def play_special(country=None):
+    """A country-specific stinger for "a special was just announced",
+    layered on top of play_cast's generic blip. Unlike every other play_*
+    here, there is no synthesized fallback: without private/sounds/<country>/
+    special.wav this is silent, since a generic beep wouldn't read as that
+    country's own flourish.
+    """
+    if not _enabled or country is None:
+        return
+    sound = _country_sound("special", country)
     if sound is not None:
         sound.play()
 

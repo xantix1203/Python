@@ -4,7 +4,7 @@ from ..config import BOARD_SIZE
 from .grid import Grid
 from .player import Player
 
-BOT_NAMES = ["Ken", "Barbie", "Mickael", "Joe la classe", "Samsoldine"]
+BOT_NAMES = ["Ken", "Barbie", "Carlsen", "Joe la classe", "Samsoldine"]
 
 _NEIGHBOR_OFFSETS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 

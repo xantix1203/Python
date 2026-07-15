@@ -11,6 +11,18 @@ class Boat:
         self.cells = [[cell, False] for cell in cells]  # [(x, y), is_hit]
         self.hits_remaining = size
 
+    @classmethod
+    def already_sunk(cls, cells, name=None):
+        """Reconstructs a boat known to be fully sunk from a network 'result'
+        message, where we only learn its cells after the fact and never see
+        the individual hits that got it there.
+        """
+        boat = cls(len(cells), cells, name=name)
+        for cell in boat.cells:
+            cell[1] = True
+        boat.hits_remaining = 0
+        return boat
+
     @property
     def is_sunk(self):
         return self.hits_remaining == 0

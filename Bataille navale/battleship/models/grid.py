@@ -30,9 +30,16 @@ class Grid:
     def place(self, x, y, size, direction):
         dx, dy = direction
         cells = [(x + dx * i, y + dy * i) for i in range(size)]
-        boat = Boat(size, cells)
+        return self.add_boat(cells, name=None)
+
+    def add_boat(self, cells, name=None):
+        """Register a boat occupying explicit `cells` (any orientation). Used to
+        rebuild an authoritative grid on the host from a client's placement,
+        where we get concrete cells rather than an anchor+direction.
+        """
+        boat = Boat(len(cells), cells, name=name)
         for cx, cy in cells:
-            self.cells[cx, cy] = size
+            self.cells[cx, cy] = boat.size
             self._occupied.add((cx, cy))
         self.floating_boats.append(boat)
         return boat
@@ -62,6 +69,59 @@ class Grid:
                     return True, boat
                 return True, None
         return False, None
+
+    def remove_boat(self, boat):
+        """Detach `boat` from this grid entirely (floating_boats/cells/
+        _occupied) -- e.g. when a special (Brésil) steals it onto another
+        player's board.
+        """
+        self.floating_boats.remove(boat)
+        for cell, _ in boat.cells:
+            self.cells[cell] = 0
+            self._occupied.discard(cell)
+
+    def add_boat_at_random_position(self, boat, max_attempts=10000):
+        """Place `boat` (already constructed elsewhere -- e.g. one just
+        detached from another player's grid via remove_boat) at a random
+        valid position on this grid, reusing its size/name/hit-state as-is,
+        just at a fresh set of cells. Returns True if placed, False if no
+        valid position was found within `max_attempts` (an essentially-full
+        board).
+        """
+        for _ in range(max_attempts):
+            x, y = random.randint(0, BOARD_SIZE - 1), random.randint(0, BOARD_SIZE - 1)
+            direction = random.choice(DIRECTIONS)
+            if self.can_place(x, y, boat.size, direction):
+                dx, dy = direction
+                cells = [(x + dx * i, y + dy * i) for i in range(boat.size)]
+                for cell_entry, cell in zip(boat.cells, cells):
+                    cell_entry[0] = cell
+                for cx, cy in cells:
+                    self.cells[cx, cy] = boat.size
+                    self._occupied.add((cx, cy))
+                self.floating_boats.append(boat)
+                return True
+        return False
+
+    def revive_boat_with_cells(self, cells):
+        """Move the sunk boat occupying exactly `cells` back to
+        floating_boats, fully restored (unhit, hits_remaining reset to its
+        true size). Used by specials that undo a sinking (e.g. URSS) -- both
+        on the authoritative server grid and, via the same cell identity, on
+        a client's local mirror of its own board. Returns the revived Boat,
+        or None if no currently-sunk boat matches (e.g. a client that hasn't
+        caught up to this event yet).
+        """
+        cells = set(cells)
+        for boat in self.sunk_boats:
+            if {cell for cell, _ in boat.cells} == cells:
+                self.sunk_boats.remove(boat)
+                for cell_entry in boat.cells:
+                    cell_entry[1] = False
+                boat.hits_remaining = boat.size
+                self.floating_boats.append(boat)
+                return boat
+        return None
 
     def __str__(self):
         return str(self.cells)
